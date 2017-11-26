@@ -59,3 +59,11 @@ in the form of start and end frames (inclusive).
 The videos in the corpus include recordings from three different ASL speakers.
 The mappings for the three speakers to video are included in the `speaker.csv` 
 file.
+
+dudad:
+
+Que es get_word_Xlengths?
+Contiene todas las variables, y una sequencia de den de X?
+"feature lists and lengths is a list of lengths of sequences within X"
+-> Las sequencias
+

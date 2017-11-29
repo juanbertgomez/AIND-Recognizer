@@ -101,39 +101,39 @@ class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
 
     '''
-
-    def best_score(self, scores):
+    def max_scores(self, scores):
         return max(scores, key = lambda x : x[0])
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        kf = KFold(n_splits = 3, shuffle = False, random_state = None)
+        kf = KFold()
         log_likelihoods = []
-        score_cvs = []
+        scores = []
 
-        for state in range(self.min_n_components, self.max_n_components + 1):
+        for num_states in range(self.min_n_components, self.max_n_components):
+        
             try:
                 # check is there is enough data to split
                 if len(self.sequences)> 2:
                     for train_index, test_index in kf.split(self.sequences):
-                        #print(train_index, test_index)
 
                         self.X, self.lengths = combine_sequences(train_index, self.sequences)
                         X_test, lengths_test = combine_sequences(test_index, self.sequences)
 
-                        hmm_model = self.base_model(state)
+                        hmm_model = self.base_model(num_states)
                         log_likelihood = hmm_model.score(X_test, lengths_test)
+                       
+                        log_likelihoods.append(log_likelihood)
+
                 else:
-                    hmm_model = self.base_model(state)
-                    log_likelihood = hmm_model.score(self.X, self.lengths)
+                    hmm_model = self.base_model(num_states)
+                    log_likelihoods = hmm_model.score(self.X, self.lengths)
 
-                log_likelihoods.append(log_likelihood)
+                scores.append([np.mean(log_likelihoods), num_states])
 
-            # Find average Log Likelihood of CV fold
-            score_cvs_avg = np.mean(log_likelihoods)
-            score_cvs.append([score_cvs_avg, hmm_model])
             except:
                 pass
-                
-            return self.best_score(score_cvs)[1] if score_cvs else None
+
+        return self.max_scores(scores)[1] if scores else None
+

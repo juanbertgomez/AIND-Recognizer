@@ -74,10 +74,34 @@ class SelectorBIC(ModelSelector):
 
         :return: GaussianHMM object
         """
+    def max_scores(self, scores):
+        return max(scores, key = lambda x : x[0])
+
+    def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        kf = KFold()
+        log_likelihoods = []
+        scores = []
+
+        for num_states in range(self.min_n_components, self.max_n_components+1):
+        
+            try:
+                self.X, self.lengths = combine_sequences(train_index, self.sequences)
+
+                hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, 
+                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
+                log_likelihood = hmm_model.score(self.X, self.lengths)
+                logN = np.log(len(self.X))
+                d = hmm_model.n_features
+                # p = = n^2 + 2*d*n - 1
+                p = n ** 2 + 2 * d * n - 1
+                BIC = -2.0 * logL + p * logN
+
+            except:
+                pass
+
+        return self.max_scores(scores)[1] if scores else None
 
 
 class SelectorDIC(ModelSelector):
@@ -111,7 +135,7 @@ class SelectorCV(ModelSelector):
         log_likelihoods = []
         scores = []
 
-        for num_states in range(self.min_n_components, self.max_n_components):
+        for num_states in range(self.min_n_components, self.max_n_components+1):
         
             try:
                 # check is there is enough data to split
@@ -121,19 +145,20 @@ class SelectorCV(ModelSelector):
                         self.X, self.lengths = combine_sequences(train_index, self.sequences)
                         X_test, lengths_test = combine_sequences(test_index, self.sequences)
 
-                        hmm_model = self.base_model(num_states)
+                        hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, 
+                            random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
                         log_likelihood = hmm_model.score(X_test, lengths_test)
                        
                         log_likelihoods.append(log_likelihood)
 
                 else:
-                    hmm_model = self.base_model(num_states)
+                    hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000,
+                        random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
                     log_likelihoods = hmm_model.score(self.X, self.lengths)
 
-                scores.append([np.mean(log_likelihoods), num_states])
+                scores.append([np.mean(log_likelihoods), hmm_model])
 
             except:
                 pass
 
         return self.max_scores(scores)[1] if scores else None
-

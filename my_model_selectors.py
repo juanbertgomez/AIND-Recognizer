@@ -68,40 +68,32 @@ class SelectorBIC(ModelSelector):
     Bayesian information criteria: BIC = -2 * logL + p * logN
     """
 
-    def select(self):
-        """ select the best model for self.this_word based on
-        BIC score for n between self.min_n_components and self.max_n_components
-
-        :return: GaussianHMM object
-        """
-    def max_scores(self, scores):
-        return max(scores, key = lambda x : x[0])
+    def min_scores(self, scores):
+        return min(scores, key = lambda x : x[0])
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        kf = KFold()
-        log_likelihoods = []
-        scores = []
+        BIC_scores = []
 
         for num_states in range(self.min_n_components, self.max_n_components+1):
         
             try:
-                self.X, self.lengths = combine_sequences(train_index, self.sequences)
-
-                hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, 
-                    random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                log_likelihood = hmm_model.score(self.X, self.lengths)
+               
+                model = self.base_model(num_states)
+                logL = model.score(self.X, self.lengths)
                 logN = np.log(len(self.X))
-                d = hmm_model.n_features
+                d = model.n_features
                 # p = = n^2 + 2*d*n - 1
-                p = n ** 2 + 2 * d * n - 1
+                p = num_states ** 2 + 2 * d * num_states - 1
                 BIC = -2.0 * logL + p * logN
+
+                BIC_scores.append([BIC, model])
 
             except:
                 pass
 
-        return self.max_scores(scores)[1] if scores else None
+        return self.min_scores(BIC_scores)[1] if BIC_scores else None
 
 
 class SelectorDIC(ModelSelector):
@@ -113,6 +105,9 @@ class SelectorDIC(ModelSelector):
     https://pdfs.semanticscholar.org/ed3d/7c4a5f607201f3848d4c02dd9ba17c791fc2.pdf
     DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
     '''
+
+    #DIC Equation:
+    #    DIC = log(P(X(i)) - 1/(M - 1) * sum(log(P(X(all but i))
 
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -145,18 +140,15 @@ class SelectorCV(ModelSelector):
                         self.X, self.lengths = combine_sequences(train_index, self.sequences)
                         X_test, lengths_test = combine_sequences(test_index, self.sequences)
 
-                        hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000, 
-                            random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                        log_likelihood = hmm_model.score(X_test, lengths_test)
-                       
+                        model = self.base_model(num_states)
+                        log_likelihood = model.score(X_test, lengths_test)
                         log_likelihoods.append(log_likelihood)
 
                 else:
-                    hmm_model = GaussianHMM(n_components=num_states, covariance_type="diag", n_iter=1000,
-                        random_state=self.random_state, verbose=False).fit(self.X, self.lengths)
-                    log_likelihoods = hmm_model.score(self.X, self.lengths)
+                    model = self.base_model(num_states)
+                    log_likelihoods = model.score(self.X, self.lengths)
 
-                scores.append([np.mean(log_likelihoods), hmm_model])
+                scores.append([np.mean(log_likelihoods), model])
 
             except:
                 pass

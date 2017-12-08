@@ -93,7 +93,7 @@ class SelectorBIC(ModelSelector):
             except:
                 pass
 
-        return self.min_scores(BIC_scores)[1] if BIC_scores else None
+        return self.min_scores(BIC_scores)[1] if BIC_scores else self.n_constant
 
 
 class SelectorDIC(ModelSelector):
@@ -132,9 +132,8 @@ class SelectorDIC(ModelSelector):
 
             except:
                 pass
-    
-        #return dic_scores
-        return self.m_scores(dic_scores)[1] if dic_scores else None
+
+        return self.m_scores(dic_scores)[1] if dic_scores else self.n_constant
 
 
 class SelectorCV(ModelSelector):
@@ -174,4 +173,4 @@ class SelectorCV(ModelSelector):
             except:
                 pass
 
-        return self.max_scores(scores)[1] if scores else None
+        return self.max_scores(scores)[1] if scores else self.n_constant

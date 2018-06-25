@@ -2,7 +2,7 @@
 ## Probabilistic Models
 ## Project: Sign Language Recognition System
 
-In this project, built a system that can recognize words communicated using the American Sign Language (ASL). A preprocessed dataset of tracked hand is provided and nose positions extracted from video. The goal would be to train a set of Hidden Markov Models (HMMs) using part of this dataset to try and identify individual words from test sequences.
+In this project I built a system that can recognize words communicated using the American Sign Language (ASL). A preprocessed dataset of tracked hand is provided and nose positions extracted from video. The goal would be to train a set of Hidden Markov Models (HMMs) using part of this dataset to try and identify individual words from test sequences.
 
 ### Install
 
